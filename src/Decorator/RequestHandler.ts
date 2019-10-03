@@ -4,12 +4,19 @@ function RequestHandlerMiddelware(method: 'get' | 'post' | 'patch' | 'put' | 'de
   return function (_, __, descriptor: TypedPropertyDescriptor<express.RequestHandler>) {
     const handler = descriptor.value.prototype.__regulusRequestHandler__ || []
 
-    descriptor.value.prototype.__regulusRequestHandler__ = [descriptor.value, ...handler]
+    descriptor.value.prototype.__regulusRequestHandler__ = [AsyncMiddleware(descriptor.value), ...handler]
     descriptor.value.prototype.__regulusRequestPath__ = path
     descriptor.value.prototype.__regulusRequestMethod__ = method
     descriptor.value.prototype.__regulusEndpoint__ = true
 
     return descriptor
+  }
+}
+
+function AsyncMiddleware(fn: express.RequestHandler) {
+  return (req, res, next) => {
+    Promise.resolve(fn(req, res, next))
+      .catch(next)
   }
 }
 
